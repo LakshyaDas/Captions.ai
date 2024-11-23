@@ -11,23 +11,40 @@ function MainComponent() {
   const [isLoading, setIsLoading] = useState(false);
   const [wordCount, setWordCount] = useState("50");
   const { toast } = ShadcnUI.useToast();
-  const [upload, { loading: uploadLoading }] = useUpload();
+  const [upload] = useUpload();
   const handleFileUpload = useCallback(
     async (file) => {
+      if (!file) return;
+
       setIsLoading(true);
-      const { url, error } = await upload({ file });
-      if (error) {
+      try {
+        const { url, error } = await upload({
+          file,
+          contentType: file.type,
+        });
+
+        if (error) {
+          toast({
+            title: "Upload failed",
+            description: error,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        setImageUrl(url);
+      } catch (err) {
         toast({
           title: "Upload failed",
-          description: error,
+          description: "Please try again",
           variant: "destructive",
         });
-        return;
+      } finally {
+        setIsLoading(false);
       }
-      setImageUrl(url);
-      setIsLoading(false);
     },
-    [upload]
+    [upload, toast]
   );
   const [showCaptionPage, setShowCaptionPage] = useState(false);
   const generateAnotherCaption = useCallback(async () => {
